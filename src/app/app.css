@@ -1,0 +1,13 @@
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  flex-shrink: 0;
+}
+
+main {
+  flex: 1;
+}
