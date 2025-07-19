@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AutocompleteSelectComponent } from '../autocomplete-select/autocomplete-select.component';
 
 export interface FilterOptions {
   searchTerm: string;
@@ -12,7 +13,7 @@ export interface FilterOptions {
 @Component({
   selector: 'app-user-filter-toolbar',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AutocompleteSelectComponent],
   template: `
     <div class="filter-toolbar">
       <!-- Ana Filtre Kısmı -->
@@ -47,18 +48,13 @@ export interface FilterOptions {
               <span class="label-icon">🏙️</span>
               <span class="label-text">Şehir Filtresi</span>
             </label>
-            <div class="select-wrapper">
-              <select
-                id="cityFilter"
-                [(ngModel)]="filters.cityFilter"
-                (ngModelChange)="onFilterChange()"
-                class="custom-select"
-              >
-                <option value="">Tüm şehirler</option>
-                <option *ngFor="let city of availableCities" [value]="city">{{ city }}</option>
-              </select>
-              <div class="select-arrow">⌄</div>
-            </div>
+            <app-autocomplete-select
+              [items]="availableCities"
+              [(ngModel)]="filters.cityFilter"
+              (ngModelChange)="onFilterChange()"
+              placeholder="Şehir seçiniz..."
+              allItemsText="Tüm şehirler"
+            ></app-autocomplete-select>
           </div>
 
           <div class="sort-group">
@@ -67,19 +63,14 @@ export interface FilterOptions {
               <span class="label-text">Sıralama</span>
             </label>
             <div class="sort-controls">
-              <div class="select-wrapper">
-                <select
-                  id="sortBy"
-                  [(ngModel)]="filters.sortBy"
-                  (ngModelChange)="onFilterChange()"
-                  class="custom-select sort-by"
-                >
-                  <option value="name">İsim</option>
-                  <option value="email">E-posta</option>
-                  <option value="city">Şehir</option>
-                  <option value="company">Şirket</option>
-                </select>
-                <div class="select-arrow">⌄</div>
+              <div class="sort-by">
+                <app-autocomplete-select
+                  [items]="sortOptionLabels"
+                  [ngModel]="getCurrentSortLabel()"
+                  (selectionChange)="onSortByChange($event)"
+                  placeholder="Sıralama seçiniz..."
+                  allItemsText="Varsayılan"
+                ></app-autocomplete-select>
               </div>
               <button
                 class="sort-order-btn"
@@ -232,37 +223,6 @@ export interface FilterOptions {
 
     .label-text {
       color: rgba(255, 255, 255, 0.9);
-    }
-
-    /* Select Wrapper */
-    .select-wrapper {
-      position: relative;
-      background: white;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    .custom-select {
-      width: 100%;
-      padding: 12px 40px 12px 15px;
-      border: none;
-      outline: none;
-      background: transparent;
-      color: #333;
-      font-size: 14px;
-      cursor: pointer;
-      appearance: none;
-    }
-
-    .select-arrow {
-      position: absolute;
-      right: 15px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #666;
-      pointer-events: none;
-      font-size: 16px;
     }
 
     /* Sıralama Kontrolleri */
@@ -459,14 +419,6 @@ export interface FilterOptions {
     }
 
     /* Hover Efektleri */
-    .custom-select:focus {
-      background: #f8f9fa;
-    }
-
-    .select-wrapper:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-    }
   `]
 })
 export class UserFilterToolbarComponent {
@@ -480,7 +432,18 @@ export class UserFilterToolbarComponent {
   };
 
   availableCities: string[] = [];
+  sortOptions: { value: string, label: string }[] = [
+    { value: 'name', label: 'İsim' },
+    { value: 'email', label: 'E-posta' },
+    { value: 'city', label: 'Şehir' },
+    { value: 'company', label: 'Şirket' }
+  ];
+  sortOptionLabels: string[] = [];
   totalResults = 0;
+
+  constructor() {
+    this.sortOptionLabels = this.sortOptions.map(option => option.label);
+  }
 
   onFilterChange(): void {
     this.filtersChanged.emit({ ...this.filters });
@@ -494,6 +457,19 @@ export class UserFilterToolbarComponent {
   toggleSortOrder(): void {
     this.filters.sortOrder = this.filters.sortOrder === 'asc' ? 'desc' : 'asc';
     this.onFilterChange();
+  }
+
+  onSortByChange(selectedLabel: string): void {
+    const selectedOption = this.sortOptions.find(option => option.label === selectedLabel);
+    if (selectedOption) {
+      this.filters.sortBy = selectedOption.value as 'name' | 'email' | 'city' | 'company';
+      this.onFilterChange();
+    }
+  }
+
+  getCurrentSortLabel(): string {
+    const currentOption = this.sortOptions.find(option => option.value === this.filters.sortBy);
+    return currentOption ? currentOption.label : 'İsim';
   }
 
   hasActiveFilters(): boolean {

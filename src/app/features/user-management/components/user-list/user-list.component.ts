@@ -11,7 +11,6 @@ import { UserFilterToolbarComponent, FilterOptions } from '../../../../shared';
   imports: [CommonModule, UserFilterToolbarComponent],
   template: `
     <div class="user-list-container">
-      <h1>Kullanıcı Listesi</h1>
 
       <!-- Filter Toolbar -->
       <app-user-filter-toolbar

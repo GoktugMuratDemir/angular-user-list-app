@@ -10,7 +10,6 @@ import { User } from '../../models';
   imports: [CommonModule],
   template: `
     <div class="user-list-container">
-      <h1>Kullanıcı Listesi</h1>
 
       <div class="loading" *ngIf="loading">
         Yükleniyor...
