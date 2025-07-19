@@ -1,16 +1,23 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { UserService } from '../../../../services';
 import { User } from '../../../../models';
+import { UserFilterToolbarComponent, FilterOptions } from '../../../../shared';
 
 @Component({
   selector: 'app-user-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, UserFilterToolbarComponent],
   template: `
     <div class="user-list-container">
       <h1>Kullanıcı Listesi</h1>
+
+      <!-- Filter Toolbar -->
+      <app-user-filter-toolbar
+        (filtersChanged)="onFiltersChanged($event)"
+        #filterToolbar>
+      </app-user-filter-toolbar>
 
       <div class="loading" *ngIf="loading">
         Yükleniyor...
@@ -34,6 +41,12 @@ import { User } from '../../../../models';
           </div>
           <div class="card-arrow">→</div>
         </div>
+      </div>
+
+      <!-- No Results Message -->
+      <div class="no-results" *ngIf="!loading && !error && users.length === 0 && filteredUsers.length === 0">
+        <p>🔍 Arama kriterlerinize uygun kullanıcı bulunamadı.</p>
+        <p>Lütfen filtreleri değiştirip tekrar deneyin.</p>
       </div>
 
       <!-- Pagination -->
@@ -69,7 +82,7 @@ import { User } from '../../../../models';
         </div>
 
         <div class="pagination-info">
-          Sayfa {{ currentPage }} / {{ totalPages }} (Toplam {{ totalUsers }} kullanıcı)
+          Sayfa {{ currentPage }} / {{ totalPages }} (Toplam {{ totalFilteredUsers }} kullanıcı)
         </div>
       </div>
 
@@ -81,6 +94,7 @@ import { User } from '../../../../models';
         Total Pages: {{ totalPages }} |
         Current Page: {{ currentPage }} |
         Total Users: {{ totalUsers }} |
+        Filtered Users: {{ totalFilteredUsers }} |
         Users Length: {{ users.length }} |
         All Users Length: {{ allUsers.length }}
       </div>
@@ -114,6 +128,26 @@ import { User } from '../../../../models';
 
     .loading {
       color: #3498db;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 40px 20px;
+      color: #666;
+      background: #f8f9fa;
+      border-radius: 12px;
+      border: 2px dashed #ddd;
+    }
+
+    .no-results p {
+      margin: 10px 0;
+      font-size: 16px;
+    }
+
+    .no-results p:first-child {
+      font-size: 18px;
+      font-weight: 600;
+      color: #555;
     }
 
     .users-grid {
@@ -276,9 +310,12 @@ import { User } from '../../../../models';
     }
   `]
 })
-export class UserListComponent implements OnInit {
+export class UserListComponent implements OnInit, AfterViewInit {
+  @ViewChild('filterToolbar') filterToolbar!: UserFilterToolbarComponent;
+
   users: User[] = [];
   allUsers: User[] = []; // Tüm kullanıcıları cache'leyeceğiz
+  filteredUsers: User[] = []; // Filtrelenmiş kullanıcılar
   loading = true;
   error: string | null = null;
 
@@ -287,6 +324,15 @@ export class UserListComponent implements OnInit {
   pageSize = 4; // Her sayfada 4 kullanıcı göster
   totalPages = 0;
   totalUsers = 0;
+  totalFilteredUsers = 0;
+
+  // Filter properties
+  currentFilters: FilterOptions = {
+    searchTerm: '',
+    sortBy: 'name',
+    sortOrder: 'asc',
+    cityFilter: ''
+  };
 
   private userService = inject(UserService);
   private router = inject(Router);
@@ -294,6 +340,10 @@ export class UserListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadAllUsers();
+  }
+
+  ngAfterViewInit(): void {
+    // ViewChild init edildiğinde çağrılır
   }
 
   loadAllUsers(): void {
@@ -306,12 +356,19 @@ export class UserListComponent implements OnInit {
         console.log('All users received:', users);
         this.allUsers = users;
         this.totalUsers = users.length;
-        this.totalPages = Math.ceil(this.totalUsers / this.pageSize);
-        this.updateCurrentPageUsers();
+
+        // Şehir listesini toolbar'a gönder
+        const cities = users.map(user => user.address.city);
+        if (this.filterToolbar) {
+          this.filterToolbar.updateAvailableCities(cities);
+        }
+
+        this.applyFilters();
         this.loading = false;
         this.cdr.detectChanges();
         console.log('Component state:', {
           allUsers: this.allUsers.length,
+          filteredUsers: this.filteredUsers.length,
           currentPageUsers: this.users.length,
           loading: this.loading,
           currentPage: this.currentPage,
@@ -327,10 +384,86 @@ export class UserListComponent implements OnInit {
     });
   }
 
+  onFiltersChanged(filters: FilterOptions): void {
+    this.currentFilters = filters;
+    this.currentPage = 1; // Filtreleme yapıldığında ilk sayfaya git
+    this.applyFilters();
+  }
+
+  applyFilters(): void {
+    let filtered = [...this.allUsers];
+
+    // Arama terimi filtresi
+    if (this.currentFilters.searchTerm) {
+      const searchTerm = this.currentFilters.searchTerm.toLowerCase();
+      filtered = filtered.filter(user =>
+        user.name.toLowerCase().includes(searchTerm) ||
+        user.email.toLowerCase().includes(searchTerm) ||
+        user.company.name.toLowerCase().includes(searchTerm) ||
+        user.username.toLowerCase().includes(searchTerm) ||
+        user.address.city.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    // Şehir filtresi
+    if (this.currentFilters.cityFilter) {
+      filtered = filtered.filter(user =>
+        user.address.city === this.currentFilters.cityFilter
+      );
+    }
+
+    // Sıralama
+    filtered.sort((a, b) => {
+      let aValue: string;
+      let bValue: string;
+
+      switch (this.currentFilters.sortBy) {
+        case 'name':
+          aValue = a.name;
+          bValue = b.name;
+          break;
+        case 'email':
+          aValue = a.email;
+          bValue = b.email;
+          break;
+        case 'city':
+          aValue = a.address.city;
+          bValue = b.address.city;
+          break;
+        case 'company':
+          aValue = a.company.name;
+          bValue = b.company.name;
+          break;
+        default:
+          aValue = a.name;
+          bValue = b.name;
+      }
+
+      const result = aValue.localeCompare(bValue);
+      return this.currentFilters.sortOrder === 'asc' ? result : -result;
+    });
+
+    this.filteredUsers = filtered;
+    this.totalFilteredUsers = filtered.length;
+    this.totalPages = Math.ceil(this.totalFilteredUsers / this.pageSize);
+
+    // Eğer mevcut sayfa total pages'den büyükse, son sayfaya git
+    if (this.currentPage > this.totalPages && this.totalPages > 0) {
+      this.currentPage = this.totalPages;
+    }
+
+    this.updateCurrentPageUsers();
+
+    // Toolbar'ı güncelle
+    if (this.filterToolbar) {
+      this.filterToolbar.updateTotalResults(this.totalFilteredUsers);
+    }
+  }
+
   updateCurrentPageUsers(): void {
     const startIndex = (this.currentPage - 1) * this.pageSize;
     const endIndex = startIndex + this.pageSize;
-    this.users = this.allUsers.slice(startIndex, endIndex);
+    this.users = this.filteredUsers.slice(startIndex, endIndex);
   }
 
   goToPage(page: number): void {
