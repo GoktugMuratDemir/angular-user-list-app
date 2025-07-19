@@ -1,8 +1,8 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UserService } from '../../services';
-import { User } from '../../models';
+import { UserService } from '../../../../services';
+import { User } from '../../../../models';
 
 @Component({
   selector: 'app-user-detail',

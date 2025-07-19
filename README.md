@@ -1,8 +1,56 @@
-# AngularUserInfoApp
+# Angular User List App
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.1.1.
+Bu proje Angular 20 ile geliştirilmiş modern bir kullanıcı listesi uygulamasıdır. Güncel Angular folder structure yapısını takip eder.
 
-## Development server
+## 🏗️ Proje Yapısı
+
+```text
+src/
+├── app/
+│   ├── core/                    # Singleton servisler, guards, interceptors
+│   │   ├── guards/
+│   │   ├── interceptors/
+│   │   └── index.ts
+│   ├── features/                # Feature modülleri
+│   │   └── user-management/
+│   │       ├── components/
+│   │       │   ├── user-list/
+│   │       │   └── user-detail/
+│   │       └── index.ts
+│   ├── models/                  # TypeScript interfaces ve types
+│   │   ├── user.model.ts
+│   │   └── index.ts
+│   ├── services/                # Application servisler
+│   │   ├── user.service.ts
+│   │   └── index.ts
+│   ├── shared/                  # Paylaşılan componentler, direktifler, pipes
+│   │   ├── components/
+│   │   ├── directives/
+│   │   ├── pipes/
+│   │   └── index.ts
+│   ├── app.component.ts
+│   ├── app.component.html
+│   ├── app.component.css
+│   ├── app.component.spec.ts
+│   ├── app.config.ts
+│   └── app.routes.ts
+├── environments/                # Environment konfigürasyonları
+│   ├── environment.ts
+│   └── environment.prod.ts
+└── ...
+```
+
+## ✨ Özellikler
+
+- ✅ Angular 20 Standalone Components
+- ✅ Güncel folder structure
+- ✅ Barrel exports (index.ts)
+- ✅ Feature-based organizasyon
+- ✅ Environment konfigurasyonu
+- ✅ TypeScript strict mode
+- ✅ Responsive tasarım
+
+## 🚀 Geliştirme Sunucusu
 
 To start a local development server, run:
 
