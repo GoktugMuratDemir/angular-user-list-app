@@ -13,6 +13,7 @@ export class UserService {
   constructor(private http: HttpClient) { }
 
   getUsers(): Observable<User[]> {
+    // JSONPlaceholder /users endpoint'i varsayılan olarak 10 kullanıcı döndürür
     return this.http.get<User[]>(this.apiUrl);
   }
 

@@ -235,6 +235,7 @@ import { User } from '../../../../models';
     }
   `]
 })
+
 export class UserDetailComponent implements OnInit {
   user: User | null = null;
   loading = true;

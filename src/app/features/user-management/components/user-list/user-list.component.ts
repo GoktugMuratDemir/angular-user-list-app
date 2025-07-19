@@ -35,6 +35,55 @@ import { User } from '../../../../models';
           <div class="card-arrow">→</div>
         </div>
       </div>
+
+      <!-- Pagination -->
+      <div class="pagination-container" *ngIf="!loading && !error && totalPages > 1">
+        <div class="pagination">
+          <button
+            class="pagination-btn"
+            [disabled]="currentPage === 1"
+            (click)="goToPage(currentPage - 1)"
+          >
+            ‹ Önceki
+          </button>
+
+          <div class="page-numbers">
+            <button
+              *ngFor="let page of getVisiblePages()"
+              class="page-btn"
+              [class.active]="page === currentPage"
+              [disabled]="page === '...'"
+              (click)="page !== '...' && goToPage(+page)"
+            >
+              {{ page }}
+            </button>
+          </div>
+
+          <button
+            class="pagination-btn"
+            [disabled]="currentPage === totalPages"
+            (click)="goToPage(currentPage + 1)"
+          >
+            Sonraki ›
+          </button>
+        </div>
+
+        <div class="pagination-info">
+          Sayfa {{ currentPage }} / {{ totalPages }} (Toplam {{ totalUsers }} kullanıcı)
+        </div>
+      </div>
+
+      <!-- Debug bilgisi -->
+      <div class="debug-info" style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 5px; font-size: 12px;">
+        <strong>Debug:</strong>
+        Loading: {{ loading }} |
+        Error: {{ error }} |
+        Total Pages: {{ totalPages }} |
+        Current Page: {{ currentPage }} |
+        Total Users: {{ totalUsers }} |
+        Users Length: {{ users.length }} |
+        All Users Length: {{ allUsers.length }}
+      </div>
     </div>
   `,
   styles: [`
@@ -135,38 +184,203 @@ import { User } from '../../../../models';
         padding: 15px;
       }
     }
+
+    /* Pagination Styles */
+    .pagination-container {
+      margin-top: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .pagination {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pagination-btn {
+      background: white;
+      border: 1px solid #ddd;
+      color: #333;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 14px;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+      background: #f8f9fa;
+      border-color: #3498db;
+    }
+
+    .pagination-btn:disabled {
+      background: #f8f9fa;
+      color: #999;
+      cursor: not-allowed;
+    }
+
+    .page-numbers {
+      display: flex;
+      gap: 5px;
+    }
+
+    .page-btn {
+      background: white;
+      border: 1px solid #ddd;
+      color: #333;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 14px;
+      min-width: 40px;
+    }
+
+    .page-btn:hover:not(:disabled):not(.active) {
+      background: #f8f9fa;
+      border-color: #3498db;
+    }
+
+    .page-btn.active {
+      background: #3498db;
+      color: white;
+      border-color: #3498db;
+    }
+
+    .page-btn:disabled {
+      background: transparent;
+      border: none;
+      color: #999;
+      cursor: default;
+    }
+
+    .pagination-info {
+      color: #666;
+      font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+      .pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .page-numbers {
+        order: -1;
+        width: 100%;
+        justify-content: center;
+      }
+    }
   `]
 })
 export class UserListComponent implements OnInit {
   users: User[] = [];
+  allUsers: User[] = []; // Tüm kullanıcıları cache'leyeceğiz
   loading = true;
   error: string | null = null;
+
+  // Pagination properties
+  currentPage = 1;
+  pageSize = 4; // Her sayfada 4 kullanıcı göster
+  totalPages = 0;
+  totalUsers = 0;
 
   private userService = inject(UserService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
-    this.loadUsers();
+    this.loadAllUsers();
   }
 
-  loadUsers(): void {
-    console.log('Loading users...');
+  loadAllUsers(): void {
+    console.log('Loading all users...');
+    this.loading = true;
+    this.error = null;
+
     this.userService.getUsers().subscribe({
       next: (users) => {
-        console.log('Users received:', users);
-        this.users = users;
+        console.log('All users received:', users);
+        this.allUsers = users;
+        this.totalUsers = users.length;
+        this.totalPages = Math.ceil(this.totalUsers / this.pageSize);
+        this.updateCurrentPageUsers();
         this.loading = false;
-        this.cdr.detectChanges(); // Manuel change detection
-        console.log('Component state:', { users: this.users, loading: this.loading });
+        this.cdr.detectChanges();
+        console.log('Component state:', {
+          allUsers: this.allUsers.length,
+          currentPageUsers: this.users.length,
+          loading: this.loading,
+          currentPage: this.currentPage,
+          totalPages: this.totalPages
+        });
       },
       error: (err) => {
         console.error('Error loading users:', err);
         this.error = 'Kullanıcılar yüklenirken bir hata oluştu.';
         this.loading = false;
-        this.cdr.detectChanges(); // Manuel change detection
+        this.cdr.detectChanges();
       }
     });
+  }
+
+  updateCurrentPageUsers(): void {
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.users = this.allUsers.slice(startIndex, endIndex);
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
+      this.currentPage = page;
+      this.updateCurrentPageUsers();
+      this.cdr.detectChanges();
+      console.log(`Switched to page ${page}, showing users:`, this.users.map(u => u.name));
+    }
+  }
+
+  getVisiblePages(): (number | string)[] {
+    const visible: (number | string)[] = [];
+    const total = this.totalPages;
+    const current = this.currentPage;
+
+    if (total <= 7) {
+      // Tüm sayfaları göster
+      for (let i = 1; i <= total; i++) {
+        visible.push(i);
+      }
+    } else {
+      // İlk sayfa
+      visible.push(1);
+
+      if (current > 4) {
+        visible.push('...');
+      }
+
+      // Mevcut sayfa etrafındaki sayfalar
+      const start = Math.max(2, current - 1);
+      const end = Math.min(total - 1, current + 1);
+
+      for (let i = start; i <= end; i++) {
+        if (i !== 1 && i !== total) {
+          visible.push(i);
+        }
+      }
+
+      if (current < total - 3) {
+        visible.push('...');
+      }
+
+      // Son sayfa
+      if (total > 1) {
+        visible.push(total);
+      }
+    }
+
+    return visible;
   }
 
   goToUserDetail(userId: number): void {
