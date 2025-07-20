@@ -1,9 +1,51 @@
+/**
+ * KULLANICI LİSTESİ KOMPONENTİ (USER LIST COMPONENT)
+ *
+ * Bu component kullanıcıların listelendiği ana sayfa komponentidir.
+ * Aşağıdaki özellikleri içerir:
+ *
+ * Temel Özellikler:
+ * - Kullanıcı listesini API'den çeker ve gösterir
+ * - Filtreleme ve arama işlevselliği
+ * - Sıralama (isim, email, şehir, şirket)
+ * - Sayfalama (pagination)
+ * - Responsive grid layout
+ * - Loading ve error state yönetimi
+ *
+ * Component İlişkileri:
+ * - UserService: API'den veri çekme
+ * - UserFilterToolbarComponent: Filtreleme UI'ı
+ * - Router: Kullanıcı detay sayfasına yönlendirme
+ *
+ * Modern Angular Özellikleri:
+ * - Standalone component
+ * - Dependency injection with inject()
+ * - ViewChild ile child component referansı
+ * - OnInit ve AfterViewInit lifecycle hooks
+ * - ChangeDetectorRef ile manuel change detection
+ */
+
+// Angular core modülleri
 import { Component, OnInit, inject, ChangeDetectorRef, ViewChild, AfterViewInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';  // *ngIf, *ngFor için
+import { Router } from '@angular/router';        // Sayfa navigasyonu için
+
+// Servis ve modeller
 import { UserService } from '../../../../services';
 import { User } from '../../../../models';
+
+// Child component ve veri tipleri
 import { UserFilterToolbarComponent, FilterOptions } from '../../../../shared';
+
+/**
+ * Component Decorator
+ *
+ * selector: HTML'de kullanım şekli
+ * standalone: true = Modül gerektirmez (modern Angular)
+ * imports: Bu component'te kullanılan dependency'ler
+ * template: HTML template (inline)
+ * styles: CSS stilleri (inline)
+ */
 
 @Component({
   selector: 'app-user-list',
@@ -310,61 +352,171 @@ import { UserFilterToolbarComponent, FilterOptions } from '../../../../shared';
   `]
 })
 export class UserListComponent implements OnInit, AfterViewInit {
+  /**
+   * ViewChild - Child Component Referansı
+   *
+   * filterToolbar: UserFilterToolbarComponent'e direkt erişim sağlar
+   * Bu sayede parent component'ten child component'in metodlarını çağırabiliriz
+   * ! operatörü: TypeScript'e bu değerin undefined olmayacağını garanti eder
+   */
   @ViewChild('filterToolbar') filterToolbar!: UserFilterToolbarComponent;
 
+  /**
+   * Component State (Durum) Özellikleri
+   *
+   * Bu özellikler component'in mevcut durumunu temsil eder
+   */
+
+  /** users: Mevcut sayfada gösterilen kullanıcılar (pagination sonrası) */
   users: User[] = [];
-  allUsers: User[] = []; // Tüm kullanıcıları cache'leyeceğiz
-  filteredUsers: User[] = []; // Filtrelenmiş kullanıcılar
+
+  /** allUsers: API'den çekilen tüm kullanıcılar (cache) */
+  allUsers: User[] = [];
+
+  /** filteredUsers: Filtreleme uygulandıktan sonraki kullanıcılar */
+  filteredUsers: User[] = [];
+
+  /** loading: Veri yüklenme durumu (spinner göstermek için) */
   loading = true;
+
+  /** error: Hata mesajı (null ise hata yok) */
   error: string | null = null;
 
-  // Pagination properties
+  /**
+   * Pagination (Sayfalama) Özellikleri
+   *
+   * Bu özellikler sayfalama sistemini yönetir
+   */
+
+  /** currentPage: Mevcut sayfa numarası (1'den başlar) */
   currentPage = 1;
-  pageSize = 4; // Her sayfada 4 kullanıcı göster
+
+  /** pageSize: Her sayfada gösterilecek kullanıcı sayısı */
+  pageSize = 4;
+
+  /** totalPages: Toplam sayfa sayısı (hesaplanır) */
   totalPages = 0;
+
+  /** totalUsers: Toplam kullanıcı sayısı (allUsers.length) */
   totalUsers = 0;
+
+  /** totalFilteredUsers: Filtreleme sonrası kullanıcı sayısı */
   totalFilteredUsers = 0;
 
-  // Filter properties
+  /**
+   * Filter (Filtre) Özellikleri
+   *
+   * currentFilters: Mevcut aktif filtreler
+   * FilterOptions interface'ini kullanır
+   */
   currentFilters: FilterOptions = {
-    searchTerm: '',
-    sortBy: 'name',
-    sortOrder: 'asc',
-    cityFilter: ''
+    searchTerm: '',    // Arama terimi
+    sortBy: 'name',    // Sıralama kriteri
+    sortOrder: 'asc',  // Sıralama yönü
+    cityFilter: ''     // Şehir filtresi
   };
 
+  /**
+   * Dependency Injection - Modern Angular Yaklaşımı
+   *
+   * inject() fonksiyonu ile servisleri enjekte ediyoruz.
+   * Bu yaklaşım constructor injection'a alternatiftir (Angular 14+)
+   *
+   * private: Bu özellikler sadece bu class içinde kullanılabilir
+   */
+
+  /** userService: API işlemleri için */
   private userService = inject(UserService);
+
+  /** router: Sayfa navigasyonu için */
   private router = inject(Router);
+
+  /** cdr: Manuel change detection için */
   private cdr = inject(ChangeDetectorRef);
 
+  /**
+   * Angular Lifecycle Hooks
+   *
+   * Bu metodlar Angular'ın component yaşam döngüsü (lifecycle) aşamalarında çalışır
+   */
+
+  /**
+   * ngOnInit: Component initialize edildiğinde çalışır
+   *
+   * OnInit interface'ini implement eder.
+   * Constructor'dan sonra, ViewChild'lar initialize edilmeden önce çalışır.
+   * Genellikle veri yükleme işlemleri burada yapılır.
+   */
   ngOnInit(): void {
-    this.loadAllUsers();
+    this.loadAllUsers(); // Kullanıcı verilerini yükle
   }
 
+  /**
+   * ngAfterViewInit: View ve ViewChild'lar initialize edildikten sonra çalışır
+   *
+   * AfterViewInit interface'ini implement eder.
+   * @ViewChild ile tanımlanan elementler burada hazır olur.
+   * DOM manipülasyonları burada yapılabilir.
+   */
   ngAfterViewInit(): void {
     // ViewChild init edildiğinde çağrılır
+    // Şu anda özel bir işlem yapılmıyor, gelecekte gerekirse kullanılabilir
   }
 
+  /**
+   * Ana Veri Yükleme Metodu
+   *
+   * API'den tüm kullanıcıları çeker ve component state'ini initialize eder.
+   * Observable pattern ile asenkron veri çekme yapılır.
+   */
   loadAllUsers(): void {
-    console.log('Loading all users...');
-    this.loading = true;
-    this.error = null;
+    console.log('Loading all users...'); // Debug için log
+    this.loading = true;  // Loading spinner'ı göster
+    this.error = null;    // Önceki hataları temizle
 
+    /**
+     * Observable Subscribe Pattern
+     *
+     * userService.getUsers() bir Observable döner
+     * subscribe() ile bu Observable'ı dinleriz
+     *
+     * subscribe() parametreleri:
+     * - next: Veri başarıyla geldiğinde çalışır
+     * - error: Hata oluştuğunda çalışır
+     * - complete: İşlem tamamlandığında çalışır (opsiyonel)
+     */
     this.userService.getUsers().subscribe({
       next: (users) => {
-        console.log('All users received:', users);
-        this.allUsers = users;
-        this.totalUsers = users.length;
+        console.log('All users received:', users); // Debug log
 
-        // Şehir listesini toolbar'a gönder
+        // State güncelleme
+        this.allUsers = users;                    // Cache'e kaydet
+        this.totalUsers = users.length;          // Toplam sayıyı güncelle
+
+        /**
+         * Child Component Güncelleme
+         *
+         * Şehir listesini filter toolbar'a gönder
+         * map() ile her user'dan city'yi çıkar
+         */
         const cities = users.map(user => user.address.city);
         if (this.filterToolbar) {
           this.filterToolbar.updateAvailableCities(cities);
         }
 
+        // Filtreleme ve sayfalama uygula
         this.applyFilters();
-        this.loading = false;
+        this.loading = false; // Loading'i kapat
+
+        /**
+         * Manual Change Detection
+         *
+         * Angular'a view'ı güncellenmesi gerektiğini söyler
+         * Zoneless change detection kullandığımız için gerekli
+         */
         this.cdr.detectChanges();
+
+        // Debug için component state'ini log'la
         console.log('Component state:', {
           allUsers: this.allUsers.length,
           filteredUsers: this.filteredUsers.length,
@@ -375,26 +527,55 @@ export class UserListComponent implements OnInit, AfterViewInit {
         });
       },
       error: (err) => {
-        console.error('Error loading users:', err);
-        this.error = 'Kullanıcılar yüklenirken bir hata oluştu.';
+        console.error('Error loading users:', err); // Error log
+        this.error = 'Kullanıcılar yüklenirken bir hata oluştu.'; // Kullanıcı dostu hata mesajı
         this.loading = false;
-        this.cdr.detectChanges();
+        this.cdr.detectChanges(); // View'ı güncelle
       }
     });
   }
 
+  /**
+   * Filter Değişiklik Event Handler
+   *
+   * UserFilterToolbarComponent'ten gelen filtre değişikliklerini yakalar.
+   * @Output decorator ile child component'ten gelen event'i dinler.
+   *
+   * @param filters - Yeni filtre ayarları
+   */
   onFiltersChanged(filters: FilterOptions): void {
-    this.currentFilters = filters;
-    this.currentPage = 1; // Filtreleme yapıldığında ilk sayfaya git
-    this.applyFilters();
+    this.currentFilters = filters;        // Yeni filtreleri kaydet
+    this.currentPage = 1;                 // Filtreleme yapıldığında ilk sayfaya git
+    this.applyFilters();                  // Filtreleri uygula
   }
 
+  /**
+   * Ana Filtreleme Metodu
+   *
+   * Bu metod tüm filtreleme mantığını içerir:
+   * 1. Arama terimi filtresi
+   * 2. Şehir filtresi
+   * 3. Sıralama
+   * 4. Sayfalama hesaplaması
+   * 5. UI güncellemesi
+   */
   applyFilters(): void {
-    let filtered = [...this.allUsers];
+    // allUsers'tan başlayarak filtreleme yap
+    let filtered = [...this.allUsers]; // Spread operator ile kopyala
 
-    // Arama terimi filtresi
+    /**
+     * Arama Terimi Filtresi
+     *
+     * Kullanıcının yazdığı terimi şu alanlarda arar:
+     * - İsim (name)
+     * - Email
+     * - Şirket adı (company.name)
+     * - Kullanıcı adı (username)
+     * - Şehir (address.city)
+     */
     if (this.currentFilters.searchTerm) {
-      const searchTerm = this.currentFilters.searchTerm.toLowerCase();
+      const searchTerm = this.currentFilters.searchTerm.toLowerCase(); // Büyük/küçük harf duyarsız
+
       filtered = filtered.filter(user =>
         user.name.toLowerCase().includes(searchTerm) ||
         user.email.toLowerCase().includes(searchTerm) ||
@@ -404,18 +585,28 @@ export class UserListComponent implements OnInit, AfterViewInit {
       );
     }
 
-    // Şehir filtresi
+    /**
+     * Şehir Filtresi
+     *
+     * Belirli bir şehir seçildiyse sadece o şehirdeki kullanıcıları göster
+     */
     if (this.currentFilters.cityFilter) {
       filtered = filtered.filter(user =>
         user.address.city === this.currentFilters.cityFilter
       );
     }
 
-    // Sıralama
+    /**
+     * Sıralama (Sorting)
+     *
+     * sort() metodu ile array'i sırala
+     * localeCompare() ile string'leri karşılaştır (Türkçe karakterler için uygun)
+     */
     filtered.sort((a, b) => {
       let aValue: string;
       let bValue: string;
 
+      // Sıralama kriterine göre değerleri al
       switch (this.currentFilters.sortBy) {
         case 'name':
           aValue = a.name;
@@ -438,75 +629,132 @@ export class UserListComponent implements OnInit, AfterViewInit {
           bValue = b.name;
       }
 
+      // Karşılaştırma yap
       const result = aValue.localeCompare(bValue);
+
+      // Sıralama yönüne göre sonucu döndür
       return this.currentFilters.sortOrder === 'asc' ? result : -result;
     });
 
+    /**
+     * Filtreleme Sonuçlarını Kaydet ve Sayfalama Hesapla
+     */
     this.filteredUsers = filtered;
     this.totalFilteredUsers = filtered.length;
+
+    // Math.ceil ile yukarıya yuvarlama yap (örn: 4.2 -> 5)
     this.totalPages = Math.ceil(this.totalFilteredUsers / this.pageSize);
 
-    // Eğer mevcut sayfa total pages'den büyükse, son sayfaya git
+    /**
+     * Sayfa Kontrolü
+     *
+     * Eğer mevcut sayfa total pages'den büyükse, son sayfaya git
+     * Örn: 10 sayfa varken kullanıcı 15. sayfada ise, 10. sayfaya götür
+     */
     if (this.currentPage > this.totalPages && this.totalPages > 0) {
       this.currentPage = this.totalPages;
     }
 
+    // Mevcut sayfa için kullanıcıları güncelle
     this.updateCurrentPageUsers();
 
-    // Toolbar'ı güncelle
+    /**
+     * Child Component Güncelleme
+     *
+     * Filter toolbar'da sonuç sayısını güncelle
+     */
     if (this.filterToolbar) {
       this.filterToolbar.updateTotalResults(this.totalFilteredUsers);
     }
   }
 
+  /**
+   * Sayfalama - Mevcut Sayfa Kullanıcılarını Güncelleme
+   *
+   * filteredUsers'tan mevcut sayfa için gerekli kullanıcıları slice() ile al
+   */
   updateCurrentPageUsers(): void {
-    const startIndex = (this.currentPage - 1) * this.pageSize;
-    const endIndex = startIndex + this.pageSize;
+    const startIndex = (this.currentPage - 1) * this.pageSize; // Başlangıç indeksi
+    const endIndex = startIndex + this.pageSize;               // Bitiş indeksi
+
+    // slice() ile belirli aralıktaki elemanları al
     this.users = this.filteredUsers.slice(startIndex, endIndex);
   }
 
+  /**
+   * Sayfa Değiştirme Metodu
+   *
+   * Kullanıcı farklı bir sayfaya tıkladığında çalışır.
+   * Sayfa kontrolü yapar ve geçerli sayfalara geçiş sağlar.
+   *
+   * @param page - Gidilecek sayfa numarası
+   */
   goToPage(page: number): void {
+    // Sayfa kontrolü: 1 ile totalPages arasında olmalı ve mevcut sayfadan farklı olmalı
     if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
-      this.currentPage = page;
-      this.updateCurrentPageUsers();
-      this.cdr.detectChanges();
+      this.currentPage = page;                  // Yeni sayfayı set et
+      this.updateCurrentPageUsers();           // O sayfa için kullanıcıları getir
+      this.cdr.detectChanges();               // View'ı güncelle
+
+      // Debug için log
       console.log(`Switched to page ${page}, showing users:`, this.users.map(u => u.name));
     }
   }
 
+  /**
+   * Görünür Sayfa Numaralarını Hesaplama Metodu
+   *
+   * Pagination UI'ında hangi sayfa numaralarının gösterileceğini hesaplar.
+   * Google tarzı pagination: 1 ... 4 5 6 ... 10
+   *
+   * Returns: (number | string)[] - Sayfa numaraları ve "..." string'leri
+   */
   getVisiblePages(): (number | string)[] {
     const visible: (number | string)[] = [];
     const total = this.totalPages;
     const current = this.currentPage;
 
+    /**
+     * Az Sayfa Durumu (≤7 sayfa)
+     *
+     * Tüm sayfaları göster: 1 2 3 4 5 6 7
+     */
     if (total <= 7) {
-      // Tüm sayfaları göster
       for (let i = 1; i <= total; i++) {
         visible.push(i);
       }
     } else {
-      // İlk sayfa
+      /**
+       * Çok Sayfa Durumu (>7 sayfa)
+       *
+       * Akıllı pagination: 1 ... 4 5 6 ... 10
+       */
+
+      // İlk sayfa her zaman göster
       visible.push(1);
 
+      // Mevcut sayfa baştan uzaksa "..." ekle
       if (current > 4) {
         visible.push('...');
       }
 
-      // Mevcut sayfa etrafındaki sayfalar
-      const start = Math.max(2, current - 1);
-      const end = Math.min(total - 1, current + 1);
+      // Mevcut sayfa etrafındaki sayfalar (±1)
+      const start = Math.max(2, current - 1);        // En az 2. sayfa
+      const end = Math.min(total - 1, current + 1);  // En fazla son-1. sayfa
 
       for (let i = start; i <= end; i++) {
+        // İlk ve son sayfayı tekrarlama
         if (i !== 1 && i !== total) {
           visible.push(i);
         }
       }
 
+      // Mevcut sayfa sondan uzaksa "..." ekle
       if (current < total - 3) {
         visible.push('...');
       }
 
-      // Son sayfa
+      // Son sayfa her zaman göster (1'den farklıysa)
       if (total > 1) {
         visible.push(total);
       }
@@ -515,7 +763,17 @@ export class UserListComponent implements OnInit, AfterViewInit {
     return visible;
   }
 
+  /**
+   * Kullanıcı Detay Sayfasına Yönlendirme
+   *
+   * Bir kullanıcı kartına tıklandığında detay sayfasına yönlendirir.
+   * Angular Router kullanır.
+   *
+   * @param userId - Detayı görüntülenecek kullanıcının ID'si
+   */
   goToUserDetail(userId: number): void {
+    // router.navigate ile programmatik navigasyon
+    // ['/users', userId] -> /users/123 URL'i oluşturur
     this.router.navigate(['/users', userId]);
   }
 }

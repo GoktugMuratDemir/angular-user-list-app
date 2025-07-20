@@ -1,8 +1,47 @@
+/**
+ * KULLANICI DETAY KOMPONENTİ (USER DETAIL COMPONENT)
+ *
+ * Bu component tek bir kullanıcının detaylı bilgilerini gösterir.
+ * URL parametresinden kullanıcı ID'sini alır ve o kullanıcının bilgilerini getirir.
+ *
+ * Component Özellikleri:
+ * - Route parametresi okuma (ActivatedRoute)
+ * - Tek kullanıcı veri çekme (UserService)
+ * - Loading ve error state yönetimi
+ * - Geri navigasyon (Router)
+ * - Responsive kart layout
+ * - Detaylı kullanıcı bilgi gösterimi
+ *
+ * URL Pattern: /users/:id (örn: /users/1, /users/5)
+ *
+ * Modern Angular Özellikleri:
+ * - Standalone component
+ * - Dependency injection with inject()
+ * - OnInit lifecycle hook
+ * - Observable patterns
+ * - Manual change detection
+ */
+
+// Angular core modülleri
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';      // *ngIf, *ngFor için
+
+// Router modülleri - URL parametresi ve navigasyon için
 import { ActivatedRoute, Router } from '@angular/router';
+
+// Servis ve modeller
 import { UserService } from '../../../../services';
 import { User } from '../../../../models';
+
+/**
+ * Component Decorator
+ *
+ * selector: HTML'de kullanım şekli (bu component route ile çağrıldığı için direkt kullanılmaz)
+ * standalone: true = Modül gerektirmez
+ * imports: Bu component'te kullanılan dependency'ler
+ * template: HTML template (inline)
+ * styles: CSS stilleri (inline)
+ */
 
 @Component({
   selector: 'app-user-detail',
@@ -237,42 +276,104 @@ import { User } from '../../../../models';
 })
 
 export class UserDetailComponent implements OnInit {
+  /**
+   * Component State (Durum) Özellikleri
+   */
+
+  /** user: Gösterilecek kullanıcı verisi (null ise henüz yüklenmemiş) */
   user: User | null = null;
+
+  /** loading: Veri yüklenme durumu */
   loading = true;
+
+  /** error: Hata mesajı (null ise hata yok) */
   error: string | null = null;
 
+  /**
+   * Dependency Injection - Modern Angular Yaklaşımı
+   *
+   * inject() fonksiyonu ile servisleri enjekte ediyoruz
+   */
+
+  /** route: URL parametrelerini okumak için */
   private route = inject(ActivatedRoute);
+
+  /** router: Sayfa navigasyonu için */
   private router = inject(Router);
+
+  /** userService: API işlemleri için */
   private userService = inject(UserService);
+
+  /** cdr: Manuel change detection için */
   private cdr = inject(ChangeDetectorRef);
 
+  /**
+   * Angular Lifecycle Hook: ngOnInit
+   *
+   * Component initialize edildiğinde çalışır.
+   * URL'den kullanıcı ID'sini alır ve o kullanıcının verilerini çeker.
+   */
   ngOnInit(): void {
+    /**
+     * Route Parameter Okuma
+     *
+     * route.snapshot.paramMap.get('id'): URL'deki :id parametresini alır
+     * Örn: /users/5 URL'inde 'id' = '5' string'i döner
+     *
+     * snapshot: Mevcut anki route durumu (bir kerelik okuma)
+     * Alternative: route.paramMap (Observable, sürekli değişiklikleri dinler)
+     */
     const userId = this.route.snapshot.paramMap.get('id');
+
     if (userId) {
+      // String'i number'a çevir ve kullanıcıyı yükle
       this.loadUser(Number(userId));
     } else {
+      // ID yoksa hata göster
       this.error = 'Geçersiz kullanıcı ID\'si';
       this.loading = false;
     }
   }
 
+  /**
+   * Kullanıcı Veri Yükleme Metodu
+   *
+   * Belirli bir ID'ye sahip kullanıcıyı API'den çeker.
+   *
+   * @param userId - Çekilecek kullanıcının ID'si
+   */
   loadUser(userId: number): void {
+    /**
+     * Observable Subscribe Pattern
+     *
+     * userService.getUserById() bir Observable döner
+     * subscribe() ile bu Observable'ı dinleriz
+     */
     this.userService.getUserById(userId).subscribe({
       next: (user) => {
-        this.user = user;
-        this.loading = false;
-        this.cdr.detectChanges(); // Manuel change detection
+        // Başarılı veri çekme
+        this.user = user;                    // Kullanıcı verisini set et
+        this.loading = false;                // Loading'i kapat
+        this.cdr.detectChanges();          // View'ı güncelle
       },
       error: (err) => {
+        // Hata durumu
         this.error = 'Kullanıcı bilgileri yüklenirken bir hata oluştu.';
         this.loading = false;
-        this.cdr.detectChanges(); // Manuel change detection
-        console.error('Error loading user:', err);
+        this.cdr.detectChanges();          // View'ı güncelle
+        console.error('Error loading user:', err); // Debug log
       }
     });
   }
 
+  /**
+   * Geri Gitme Metodu
+   *
+   * "Geri Dön" butonuna tıklandığında ana sayfaya yönlendirir.
+   * Router.navigate() ile programmatik navigasyon yapar.
+   */
   goBack(): void {
+    // Ana sayfaya git (UserListComponent)
     this.router.navigate(['/']);
   }
 }

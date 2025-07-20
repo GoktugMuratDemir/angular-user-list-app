@@ -1,6 +1,50 @@
 # Angular User List App
 
-Bu proje Angular 20 ile geliştirilmiş modern bir kullanıcı listesi uygulamasıdır. Güncel Angular folder structure yapısını takip eder.
+Bu proje Angular 20 ile geliştirilmiş modern bir kullanıcı listesi uygulamasıdır. **Yeni Angular öğrenenler için kapsamlı Türkçe dokümantasyon içerir.**
+
+## 🌐 Canlı Demo
+
+**Canlı uygulamayı görüntülemek için:** [https://angular-user-list-app.vercel.app/](https://angular-user-list-app.vercel.app/)
+
+## 📚 Dokümantasyon
+
+Bu proje özel olarak Angular öğrenmek isteyenler için hazırlanmıştır:
+
+- **Her dosyada detaylı Türkçe açıklamalar** - Angular konseptlerinin açıklaması
+- **Modern Angular patterns** - Standalone components, inject(), signals
+- **Best practices** - Clean code, architecture patterns, type safety
+- **Kapsamlı kod yorumları** - Her satırın ne yaptığının açıklaması
+
+👉 **[DOCUMENTATION.md](./DOCUMENTATION.md) dosyasını okuyarak başlayın!**
+
+## 🚀 Hızlı Başlangıç
+
+```bash
+# Bağımlılıkları yükleyin
+npm install
+
+# Geliştirme sunucusunu başlatın
+ng serve
+```
+
+Tarayıcıda `http://localhost:4200` adresine gidin.
+
+## 📖 Öğrenme Rehberi
+
+1. **İlk olarak** - `DOCUMENTATION.md` dosyasını okuyun
+2. **Başlangıç için** - `src/main.ts` ve `src/app/app.config.ts` dosyalarını inceleyin
+3. **Component'ler için** - `src/app/features/` klasörüne bakın
+4. **Advanced konular için** - `src/app/shared/components/` klasörünü inceleyin
+
+## ✨ Özellikler
+
+- ✅ Angular 20 Standalone Components
+- ✅ Kapsamlı Türkçe dokümantasyon
+- ✅ Modern Angular patterns
+- ✅ TypeScript best practices
+- ✅ RxJS Observable patterns
+- ✅ Responsive design
+- ✅ Feature-based architecture
 
 ## 🏗️ Proje Yapısı
 
@@ -40,7 +84,7 @@ src/
 └── ...
 ```
 
-## ✨ Özellikler
+## 🛠️ Teknik Özellikler
 
 - ✅ Angular 20 Standalone Components
 - ✅ Güncel folder structure

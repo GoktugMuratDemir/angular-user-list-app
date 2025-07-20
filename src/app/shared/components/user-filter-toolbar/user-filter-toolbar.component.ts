@@ -1,19 +1,58 @@
+/**
+ * KULLANICI FİLTRE TOOLBAR KOMPONENTİ (USER FILTER TOOLBAR COMPONENT)
+ *
+ * Bu component kullanıcı listesinde filtreleme ve sıralama işlemlerini yönetir.
+ * Arama, şehir filtresi, sıralama ve filtre temizleme özelliklerini içerir.
+ *
+ * Component özellikleri:
+ * - Standalone component (modül gerektirmez)
+ * - Output decorator ile parent component'e veri gönderir
+ * - ngModel directive'i ile two-way data binding kullanır
+ * - Custom autocomplete select component'ini kullanır
+ *
+ * Bu component modern Angular pratiklerini gösterir:
+ * - Standalone API
+ * - Signal kullanımı (gelecekte eklenebilir)
+ * - Event-driven architecture
+ * - Responsive design
+ */
+
+// Angular core modüllerinden gerekli importlar
 import { Component, EventEmitter, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';   // *ngIf, *ngFor gibi built-in directive'ler için
+import { FormsModule } from '@angular/forms';     // ngModel two-way binding için
+
+// Custom autocomplete select component'ini import ediyoruz
 import { AutocompleteSelectComponent } from '../autocomplete-select/autocomplete-select.component';
 
+/**
+ * FilterOptions Interface
+ *
+ * Filtre seçeneklerinin veri yapısını tanımlar.
+ * Bu interface hem component içinde hem de parent component'te kullanılır.
+ * Type safety sağlar ve IDE'de intellisense desteği verir.
+ */
 export interface FilterOptions {
-  searchTerm: string;
-  sortBy: 'name' | 'email' | 'city' | 'company';
-  sortOrder: 'asc' | 'desc';
-  cityFilter: string;
+  searchTerm: string;                                    // Arama terimi (kullanıcı adı, email vs. için)
+  sortBy: 'name' | 'email' | 'city' | 'company';      // Sıralama kriteri (union type)
+  sortOrder: 'asc' | 'desc';                           // Sıralama yönü (ascending/descending)
+  cityFilter: string;                                   // Şehir filtresi
 }
 
+/**
+ * @Component Decorator
+ *
+ * Component'in metadata'sını tanımlar:
+ * - selector: HTML'de nasıl kullanılacağı
+ * - standalone: true = modül gerektirmez (modern Angular)
+ * - imports: Bu component'te kullanılan diğer component/directive/pipe'lar
+ * - template: HTML template (inline olarak tanımlanmış)
+ * - styles: CSS stilleri (inline olarak tanımlanmış)
+ */
 @Component({
-  selector: 'app-user-filter-toolbar',
-  standalone: true,
-  imports: [CommonModule, FormsModule, AutocompleteSelectComponent],
+  selector: 'app-user-filter-toolbar',    // <app-user-filter-toolbar></app-user-filter-toolbar>
+  standalone: true,                       // Standalone component (Angular 14+)
+  imports: [CommonModule, FormsModule, AutocompleteSelectComponent], // Kullanılan dependency'ler
   template: `
     <div class="filter-toolbar">
       <!-- Ana Filtre Kısmı -->
@@ -422,43 +461,117 @@ export interface FilterOptions {
   `]
 })
 export class UserFilterToolbarComponent {
+  /**
+   * @Output Decorator
+   *
+   * Parent component'e veri göndermek için EventEmitter kullanır.
+   * Child component'ten parent component'e kommunikasyon sağlar.
+   *
+   * filtersChanged: FilterOptions tipinde veri gönderen EventEmitter
+   * Parent component bu event'i dinleyip filtreleme işlemini yapar
+   */
   @Output() filtersChanged = new EventEmitter<FilterOptions>();
 
+  /**
+   * Component State (Durum) Özellikleri
+   *
+   * filters: Mevcut filtre ayarlarını tutan obje
+   * Başlangıç değerleri varsayılan durumu temsil eder
+   */
   filters: FilterOptions = {
-    searchTerm: '',
-    sortBy: 'name',
-    sortOrder: 'asc',
-    cityFilter: ''
+    searchTerm: '',          // Boş arama terimi
+    sortBy: 'name',         // Varsayılan sıralama: isim
+    sortOrder: 'asc',       // Varsayılan sıra: A-Z
+    cityFilter: ''          // Boş şehir filtresi
   };
 
+  /**
+   * availableCities: Filtrelemede kullanılacak şehir listesi
+   * Parent component'ten (UserListComponent) gelen verilerle doldurulur
+   */
   availableCities: string[] = [];
+
+  /**
+   * sortOptions: Sıralama seçeneklerinin key-value mapping'i
+   * value: FilterOptions'da kullanılan key
+   * label: UI'da gösterilen Türkçe metin
+   */
   sortOptions: { value: string, label: string }[] = [
     { value: 'name', label: 'İsim' },
     { value: 'email', label: 'E-posta' },
     { value: 'city', label: 'Şehir' },
     { value: 'company', label: 'Şirket' }
   ];
+
+  /**
+   * sortOptionLabels: Autocomplete component'inde kullanılan label'lar
+   * sortOptions array'inden sadece label'ları çıkarır
+   */
   sortOptionLabels: string[] = [];
+
+  /**
+   * totalResults: Filtreleme sonucu bulunan kullanıcı sayısı
+   * Parent component tarafından güncellenır
+   */
   totalResults = 0;
 
+  /**
+   * Constructor (Yapıcı Metod)
+   *
+   * Component oluşturulduğunda çalışır.
+   * sortOptionLabels array'ini sortOptions'dan oluşturur.
+   *
+   * map() metodu: Array'deki her elemanı dönüştürür
+   * option => option.label: Her option objesinden sadece label'ı al
+   */
   constructor() {
     this.sortOptionLabels = this.sortOptions.map(option => option.label);
   }
 
+  /**
+   * Filtre değişikliği event handler
+   *
+   * Bu metod herhangi bir filtre değiştiğinde çalışır.
+   * Parent component'e güncel filtre durumunu gönderir.
+   *
+   * {...this.filters}: Spread operator - objeyi kopyalar
+   * Bu sayede orijinal filters objesi değişmez (immutability)
+   */
   onFilterChange(): void {
     this.filtersChanged.emit({ ...this.filters });
   }
 
+  /**
+   * Arama kutusunu temizleme metodu
+   *
+   * Sadece searchTerm'i temizler, diğer filtrelere dokunmaz.
+   * Temizledikten sonra onFilterChange() çağırarak parent'ı bilgilendirir.
+   */
   clearSearch(): void {
     this.filters.searchTerm = '';
     this.onFilterChange();
   }
 
+  /**
+   * Sıralama yönünü değiştirme metodu
+   *
+   * Ternary operator kullanarak asc <-> desc arasında geçiş yapar.
+   * condition ? value1 : value2 yapısı kullanır
+   */
   toggleSortOrder(): void {
     this.filters.sortOrder = this.filters.sortOrder === 'asc' ? 'desc' : 'asc';
     this.onFilterChange();
   }
 
+  /**
+   * Sıralama kriteri değişikliği event handler
+   *
+   * @param selectedLabel - Autocomplete'ten seçilen Türkçe label
+   *
+   * find() metodu: Array'de koşulu sağlayan ilk elemanı bulur
+   * selectedLabel'a karşılık gelen value'yu bulup filters.sortBy'a atar
+   * Type assertion (as) ile TypeScript'e tip garantisi veririz
+   */
   onSortByChange(selectedLabel: string): void {
     const selectedOption = this.sortOptions.find(option => option.label === selectedLabel);
     if (selectedOption) {
@@ -467,11 +580,27 @@ export class UserFilterToolbarComponent {
     }
   }
 
+  /**
+   * Mevcut sıralama kriterinin Türkçe label'ını getiren metod
+   *
+   * Returns: string - Mevcut sortBy değerine karşılık gelen Türkçe label
+   *
+   * find() ile mevcut sortBy'a karşılık gelen option'ı bulur
+   * Bulamazsa varsayılan olarak 'İsim' döner
+   */
   getCurrentSortLabel(): string {
     const currentOption = this.sortOptions.find(option => option.value === this.filters.sortBy);
     return currentOption ? currentOption.label : 'İsim';
   }
 
+  /**
+   * Aktif filtre kontrolü
+   *
+   * Returns: boolean - Herhangi bir filtre aktif mi?
+   *
+   * || (OR) operatörü ile herhangi bir filtre varsayılan değerden farklıysa true döner
+   * Bu metod "Sıfırla" butonunun enable/disable durumunu kontrol eder
+   */
   hasActiveFilters(): boolean {
     return this.filters.searchTerm !== '' ||
            this.filters.cityFilter !== '' ||
@@ -479,6 +608,12 @@ export class UserFilterToolbarComponent {
            this.filters.sortOrder !== 'asc';
   }
 
+  /**
+   * Tüm filtreleri temizleme metodu
+   *
+   * Tüm filtre değerlerini varsayılan duruma getirir.
+   * Yeni obje oluşturup filters'a atar (immutable update)
+   */
   clearFilters(): void {
     this.filters = {
       searchTerm: '',
@@ -489,10 +624,26 @@ export class UserFilterToolbarComponent {
     this.onFilterChange();
   }
 
+  /**
+   * Mevcut şehir listesini güncelleme metodu
+   *
+   * @param cities - Parent component'ten gelen şehir listesi
+   *
+   * Set kullanarak duplicate'leri temizler, sonra tekrar array'e çevirir
+   * sort() ile alfabetik sıralama yapar
+   * Spread operator (...) ile Set'i array'e dönüştürür
+   */
   updateAvailableCities(cities: string[]): void {
     this.availableCities = [...new Set(cities)].sort();
   }
 
+  /**
+   * Toplam sonuç sayısını güncelleme metodu
+   *
+   * @param count - Filtreleme sonucu bulunan kullanıcı sayısı
+   *
+   * Parent component filtreleme yaptıktan sonra bu metodu çağırır
+   */
   updateTotalResults(count: number): void {
     this.totalResults = count;
   }
