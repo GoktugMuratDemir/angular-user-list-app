@@ -15,7 +15,7 @@ import { LoadingSpinnerComponent } from '../../shared';
         ← Geri Dön
       </button>
 
-      <app-loading-spinner 
+      <app-loading-spinner
         *ngIf="loading"
         message="Kullanıcı bilgileri yükleniyor..."
         [size]="60"

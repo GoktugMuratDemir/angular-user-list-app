@@ -12,7 +12,7 @@ import { LoadingSpinnerComponent } from '../../shared';
   template: `
     <div class="user-list-container">
 
-      <app-loading-spinner 
+      <app-loading-spinner
         *ngIf="loading"
         message="Kullanıcılar yükleniyor..."
         [size]="60"

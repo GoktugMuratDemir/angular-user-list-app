@@ -40,7 +40,7 @@ import { CommonModule } from '@angular/common';
     <div class="loading-container" [class]="containerClass">
       <!-- Ana Spinner Wrapper -->
       <div class="spinner-wrapper">
-        
+
         <!-- Modern Gradient Spinner -->
         <div class="spinner" [style.width.px]="size" [style.height.px]="size">
           <div class="spinner-inner"></div>
@@ -48,7 +48,7 @@ import { CommonModule } from '@angular/common';
 
         <!-- Pulse Animation Background -->
         <div class="spinner-pulse" [style.width.px]="size * 1.5" [style.height.px]="size * 1.5"></div>
-        
+
         <!-- Loading Message -->
         <div class="loading-message" *ngIf="message">
           <span class="message-text">{{ message }}</span>
@@ -320,7 +320,7 @@ export class LoadingSpinnerComponent {
    * - 'inline': Normal içerik içinde gösterim (varsayılan)
    * - 'overlay': Mevcut içerik üzerinde overlay
    * - 'fullscreen': Tam ekran loading
-   * 
+   *
    * @example
    * <app-loading-spinner type="fullscreen"></app-loading-spinner>
    */

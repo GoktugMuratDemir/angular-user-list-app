@@ -60,7 +60,7 @@ import { UserFilterToolbarComponent, FilterOptions, LoadingSpinnerComponent } fr
         #filterToolbar>
       </app-user-filter-toolbar>
 
-      <app-loading-spinner 
+      <app-loading-spinner
         *ngIf="loading"
         message="Kullanıcılar yükleniyor..."
         [size]="60"
@@ -73,7 +73,7 @@ import { UserFilterToolbarComponent, FilterOptions, LoadingSpinnerComponent } fr
 
       <div class="users-grid" *ngIf="!loading && !error">
         <!-- Filtreleme Loading Overlay -->
-        <app-loading-spinner 
+        <app-loading-spinner
           *ngIf="filterLoading"
           message="Filtreler uygulanıyor..."
           [size]="40"
@@ -556,7 +556,7 @@ export class UserListComponent implements OnInit, AfterViewInit {
     this.filterLoading = true;            // Filtreleme loading'ini başlat
     this.currentFilters = filters;        // Yeni filtreleri kaydet
     this.currentPage = 1;                 // Filtreleme yapıldığında ilk sayfaya git
-    
+
     // Kısa bir delay ile loading efekti göster (gerçek API çağrısı simülasyonu)
     setTimeout(() => {
       this.applyFilters();                // Filtreleri uygula
