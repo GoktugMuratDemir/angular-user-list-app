@@ -3,20 +3,24 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UserService } from '../../services';
 import { User } from '../../models';
+import { LoadingSpinnerComponent } from '../../shared';
 
 @Component({
   selector: 'app-user-detail',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, LoadingSpinnerComponent],
   template: `
     <div class="user-detail-container">
       <button class="back-button" (click)="goBack()">
         ← Geri Dön
       </button>
 
-      <div class="loading" *ngIf="loading">
-        Yükleniyor...
-      </div>
+      <app-loading-spinner 
+        *ngIf="loading"
+        message="Kullanıcı bilgileri yükleniyor..."
+        [size]="60"
+        type="inline">
+      </app-loading-spinner>
 
       <div class="error" *ngIf="error">
         {{ error }}
@@ -107,21 +111,14 @@ import { User } from '../../models';
       background: #2980b9;
     }
 
-    .loading, .error {
+    .error {
       text-align: center;
       padding: 20px;
       font-size: 18px;
-    }
-
-    .error {
       color: #e74c3c;
       background-color: #fdf2f2;
       border: 1px solid #e74c3c;
       border-radius: 8px;
-    }
-
-    .loading {
-      color: #3498db;
     }
 
     .user-header {

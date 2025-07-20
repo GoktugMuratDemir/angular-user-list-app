@@ -3,17 +3,21 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { UserService } from '../../services';
 import { User } from '../../models';
+import { LoadingSpinnerComponent } from '../../shared';
 
 @Component({
   selector: 'app-user-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, LoadingSpinnerComponent],
   template: `
     <div class="user-list-container">
 
-      <div class="loading" *ngIf="loading">
-        Yükleniyor...
-      </div>
+      <app-loading-spinner 
+        *ngIf="loading"
+        message="Kullanıcılar yükleniyor..."
+        [size]="60"
+        type="inline">
+      </app-loading-spinner>
 
       <div class="error" *ngIf="error">
         {{ error }}
@@ -49,21 +53,14 @@ import { User } from '../../models';
       margin-bottom: 30px;
     }
 
-    .loading, .error {
+    .error {
       text-align: center;
       padding: 20px;
       font-size: 18px;
-    }
-
-    .error {
       color: #e74c3c;
       background-color: #fdf2f2;
       border: 1px solid #e74c3c;
       border-radius: 8px;
-    }
-
-    .loading {
-      color: #3498db;
     }
 
     .users-grid {

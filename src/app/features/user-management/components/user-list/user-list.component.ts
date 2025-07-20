@@ -35,7 +35,7 @@ import { UserService } from '../../../../services';
 import { User } from '../../../../models';
 
 // Child component ve veri tipleri
-import { UserFilterToolbarComponent, FilterOptions } from '../../../../shared';
+import { UserFilterToolbarComponent, FilterOptions, LoadingSpinnerComponent } from '../../../../shared';
 
 /**
  * Component Decorator
@@ -50,7 +50,7 @@ import { UserFilterToolbarComponent, FilterOptions } from '../../../../shared';
 @Component({
   selector: 'app-user-list',
   standalone: true,
-  imports: [CommonModule, UserFilterToolbarComponent],
+  imports: [CommonModule, UserFilterToolbarComponent, LoadingSpinnerComponent],
   template: `
     <div class="user-list-container">
 
@@ -60,15 +60,27 @@ import { UserFilterToolbarComponent, FilterOptions } from '../../../../shared';
         #filterToolbar>
       </app-user-filter-toolbar>
 
-      <div class="loading" *ngIf="loading">
-        Yükleniyor...
-      </div>
+      <app-loading-spinner 
+        *ngIf="loading"
+        message="Kullanıcılar yükleniyor..."
+        [size]="60"
+        type="inline">
+      </app-loading-spinner>
 
       <div class="error" *ngIf="error">
         {{ error }}
       </div>
 
       <div class="users-grid" *ngIf="!loading && !error">
+        <!-- Filtreleme Loading Overlay -->
+        <app-loading-spinner 
+          *ngIf="filterLoading"
+          message="Filtreler uygulanıyor..."
+          [size]="40"
+          type="overlay"
+          [showBackdrop]="true">
+        </app-loading-spinner>
+
         <div
           class="user-card"
           *ngFor="let user of users"
@@ -154,21 +166,14 @@ import { UserFilterToolbarComponent, FilterOptions } from '../../../../shared';
       margin-bottom: 30px;
     }
 
-    .loading, .error {
+    .error {
       text-align: center;
       padding: 20px;
       font-size: 18px;
-    }
-
-    .error {
       color: #e74c3c;
       background-color: #fdf2f2;
       border: 1px solid #e74c3c;
       border-radius: 8px;
-    }
-
-    .loading {
-      color: #3498db;
     }
 
     .no-results {
@@ -192,6 +197,7 @@ import { UserFilterToolbarComponent, FilterOptions } from '../../../../shared';
     }
 
     .users-grid {
+      position: relative;
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
       gap: 20px;
@@ -376,8 +382,11 @@ export class UserListComponent implements OnInit, AfterViewInit {
   /** filteredUsers: Filtreleme uygulandıktan sonraki kullanıcılar */
   filteredUsers: User[] = [];
 
-  /** loading: Veri yüklenme durumu (spinner göstermek için) */
+  /** loading: Ana veri yüklenme durumu (spinner göstermek için) */
   loading = true;
+
+  /** filterLoading: Filtreleme işlemi loading durumu (daha hızlı spinner için) */
+  filterLoading = false;
 
   /** error: Hata mesajı (null ise hata yok) */
   error: string | null = null;
@@ -544,9 +553,16 @@ export class UserListComponent implements OnInit, AfterViewInit {
    * @param filters - Yeni filtre ayarları
    */
   onFiltersChanged(filters: FilterOptions): void {
+    this.filterLoading = true;            // Filtreleme loading'ini başlat
     this.currentFilters = filters;        // Yeni filtreleri kaydet
     this.currentPage = 1;                 // Filtreleme yapıldığında ilk sayfaya git
-    this.applyFilters();                  // Filtreleri uygula
+    
+    // Kısa bir delay ile loading efekti göster (gerçek API çağrısı simülasyonu)
+    setTimeout(() => {
+      this.applyFilters();                // Filtreleri uygula
+      this.filterLoading = false;         // Filtreleme loading'ini kapat
+      this.cdr.detectChanges();           // View'ı güncelle
+    }, 300);
   }
 
   /**
