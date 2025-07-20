@@ -222,7 +222,7 @@ import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/f
       background: white;
       border-radius: 10px;
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-      z-index: 1000;
+      z-index: 99999;
       margin-top: 4px;
       opacity: 0;
       transform: translateY(-10px);

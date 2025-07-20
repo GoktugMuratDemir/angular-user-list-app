@@ -155,6 +155,8 @@ export interface FilterOptions {
       margin-bottom: 25px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
       color: white;
+      position: relative;
+      z-index: 1;
     }
 
     .main-filters {
@@ -241,7 +243,6 @@ export interface FilterOptions {
       background: rgba(255, 255, 255, 0.1);
       border-radius: 15px;
       padding: 20px;
-      backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
@@ -316,6 +317,8 @@ export interface FilterOptions {
       align-items: center;
       padding-top: 20px;
       border-top: 1px solid rgba(255, 255, 255, 0.2);
+      position: relative;
+      z-index: 1;
     }
 
     .results-info {
@@ -330,8 +333,9 @@ export interface FilterOptions {
       display: flex;
       align-items: center;
       gap: 6px;
-      backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.3);
+      position: relative;
+      z-index: 1;
     }
 
     .results-count {
@@ -363,7 +367,6 @@ export interface FilterOptions {
       font-size: 14px;
       font-weight: 500;
       transition: all 0.3s ease;
-      backdrop-filter: blur(10px);
     }
 
     .action-btn:hover:not(:disabled) {
